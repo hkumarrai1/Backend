@@ -3,7 +3,6 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const app = express();
-const ClamScan = require("clamscan");
 const sanitize = require("sanitize-filename");
 app.use(express.json());
 
@@ -24,11 +23,6 @@ const getFileSize = (folder) => {
   });
   return totalSize;
 };
-
-const clamScan = new ClamScan().init({
-  removeInfected: true,
-  debugMode: true,
-});
 
 const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
 
@@ -65,21 +59,12 @@ app.post("/uploads", upload.array("files", 5), async (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ message: "No files Uploaded" });
   }
-  const folderSize = getFolderSize("uploads");
+  const folderSize = getFileSize("uploads");
   if (folderSize + req.file.size > MAX_STORAGE) {
     fs.unlinkSync(req.file.path);
     return res.status(400).json({ message: "Storage quota exceeded" });
   }
   try {
-    for (const file of req.files) {
-      const scannedResult = await clamScan.scanFile(file.path);
-      if (scannedResult.isInfected) {
-        fs.unlinkSync(file.path);
-        return res
-          .status(400)
-          .json({ message: "Files are infected with malware" });
-      }
-    }
     res
       .status(201)
       .json({ message: "File Uploaded SuccessFully", files: req.files });
