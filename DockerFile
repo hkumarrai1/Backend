@@ -1,0 +1,17 @@
+# Use Node.js as the base image
+FROM node:16
+
+# Install ClamAV
+RUN apt-get update && apt-get install -y clamav clamav-daemon
+
+# Set up the application
+WORKDIR /usr/src/app
+COPY package*.json ./
+RUN npm install
+COPY . .
+
+# Expose necessary ports
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "start"]
